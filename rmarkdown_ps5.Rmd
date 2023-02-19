@@ -29,42 +29,71 @@ cat("There are", iso_2, "different iso2 codes.")
 names <- length(unique(gapminder$name))
 cat("There are", names, "different country names.")
 
-##grouped <- gapminder %>%
- ## group_by(iso2)
+gapminder %>%
+  group_by(iso2) %>%
+  summarise(n = n_distinct(name)) %>%
+  arrange(desc(n))
 
-sorted <- arrange(gapminder, desc(iso2))
+```
+There are no Countries that share the same iso2 code. Only the unamed countries are the same.
 
-name_iso2 <- paste(sorted$name, sorted$iso2, sep = " ")
-  
-unique(name_iso2)
 
-view(unique)
 
+```{r, echo = FALSE}
+gapminder %>%
+  group_by(name) %>%
+  summarise(n = n_distinct(iso3)) %>%
+  arrange(desc(n))
+
+gapminder %>%
+  filter(nchar(iso3) > 3) %>%
+  select(iso3, name) %>%
+  reframe(n = unique(iso3)) 
+```
+These tables show the number of iso3 codes that share the same country name and the names of the iso3 codes that share the name. 
+
+
+
+<p> First year in this data set: </p>
+```{r, echo = FALSE}
 gapminder %>%
   filter(is.na(time) == FALSE) %>%
   summarize(n = max(time)) %>%
   pull(n)
 
+```
+
+
+<p> Last year in this data set: </p>
+```{r, echo = FALSE}
 gapminder %>%
   filter(is.na(time) == FALSE) %>%
   summarize(n = min(time)) %>%
   pull(n)
+```
 
+
+
+```{r, echo = FALSE}
 co2_table <- gapminder %>%
   filter(is.na(co2)) %>%
   filter(is.na(time) == FALSE) %>%
   group_by(time) %>%
   summarize(length(co2))
 co2_table
-
 ```
+
 This table shows all of the CO2 emission data that are missing by year. 
+
+
+
 ```{r, echo = FALSE}
 co2_table %>%
   arrange(length(co2)) %>%
   tail(3)
 ```
 This table shows the three years with the most CO2 emission data missing.
+
 
 
 ```{r, echo = FALSE}
@@ -77,12 +106,16 @@ co2_PC_table
 ```
 This table shows all of the CO2 emission data per capita that is missing by year. 
 
+
+
 ```{r, echo = FALSE}
 co2_PC_table %>%
   arrange(`length(co2_PC)`) %>%
   tail(3)
 ```
 This table shows the three years with the most CO2 PC emission data missing.
+
+
 
 ```{r, echo = FALSE}
 plotting <- gapminder %>%
@@ -94,6 +127,8 @@ ggplot(plotting) +
 ```
 <p> This is a graph of the total CO2 emissions from the US, China, India, Canada, Aruba, and the Bahamas from 1960 to 2019. Each country seems to be regulating CO2 emissions in very different patterns. However, the general trend of CO2 emissions over the years is upward.</p>
 
+
+
 ```{r, echo = FALSE}
 plotting_PC <- gapminder %>%
   filter(is.na(co2_PC) == FALSE) %>%
@@ -104,6 +139,9 @@ ggplot(plotting_PC) +
 
 ```
 <p>This is a graph of the CO2 emissions per capita from the US, China, India, Canada, Aruba, and the Bahamas from 1960 to 2019. The trends for CO2 emissions per capita seem to be pretty steady for all of the countries expect for Aruba.</p>  
+
+
+
 ```{r, echo = FALSE}
 average_data <- gapminder %>% 
   filter(is.na(co2_PC) == FALSE) %>%
@@ -116,6 +154,8 @@ average_data
 These are the average CO2 emissions per capita for each region every 
 year.
 
+
+
 ```{r, echo = FALSE}
 filtered <- average_data %>%
   filter(time == 1960 | time == 2016)
@@ -125,6 +165,8 @@ ggplot(filtered, aes(region, average_value, fill = as.factor(time))) +
   labs(title = "Average CO2 Emissions for Different Continents in 1960 and 2016", x = "Continent", y = "CO2 Emission Per Capita", fill = "Year") +
   theme_bw()
 ```
+
+
 
 ```{r, echo = FALSE}
 country2019 <- gapminder %>%
@@ -139,6 +181,8 @@ country2019
 ```
 CO2 emission levels per capita for 2019 are not available. 
 
+
+
 ```{r, echo = FALSE}
 GDPplot <- gapminder %>%
   filter(is.na(GDP_PC) == FALSE) %>%
@@ -150,6 +194,8 @@ ggplot(GDPplot) +
 ```
 <p>This is a graph of GDP per capita versus life expectancy by country, using data from 1960. Overall, Europe and The Americas seem to have higher GDP per capita values than the other continents. Africa appears to have the lowest. </p>
 
+
+
 ```{r, echo = FALSE}
 GDPplot <- gapminder %>%
   filter(is.na(GDP_PC) == FALSE) %>%
@@ -160,6 +206,8 @@ ggplot(GDPplot) +
   geom_point(aes(x=lifeExpectancy, y=GDP_PC, group=name, size=totalPopulation, col=region))
 ```
 <p>This is a graph of GDP per capita versus life expectancy by country, using data from 2019. The biggest noticeable change is the increase in life expectancy and GDP per capita values overall. Asia also increased in GDP per capita values relative to the other continents. </p>
+
+
 
 ```{r, echo = FALSE}
 LE1960 <- gapminder %>%
@@ -173,6 +221,8 @@ LE1960 <- gapminder %>%
 LE1960
 ```
 These are the average life expectancies based on continent in 1960.
+
+
 
 ```{r, echo = FALSE}
 LE2019 <- gapminder %>%
@@ -188,13 +238,21 @@ LE2019
 These are the average life expectancies based on continent in 2019.
 The relative trends of these life expectancies are reflective of what was shown in the graph.
 
-```{r, echo = FALSE}
-LE <- cbind(LE1960, LE2019)
-LE
-LE['LE Growth'] = LE['LE1960'] + LE['LE2019']
-print(LE)
 
+
+```{r, echo = FALSE}
+LE <- data.frame(cbind(LE1960, LE2019))
+
+LE$LEGrowth = LE$LE2019 - LE$LE1960
+
+LE_sorted <- LE %>% 
+  arrange(LEGrowth)
+
+LE_sorted
 ```
+This table shows that Asia has had the greatest growth in life expectancy from 1960 to 2019, and Europe has had the least.
+
+
 
 ```{r, echo = FALSE}
 GDP1960 <- gapminder %>%
@@ -229,6 +287,7 @@ ggplot(GDP, aes(x = GDP_PC)) +
 ```
 
 
+
 ```{r, echo = FALSE}
 meanLE1960 <- gapminder %>%
   filter(time == 1960) %>%
@@ -244,6 +303,8 @@ cat("The US was ranked ", USrank1960, "th for life expectancy in 1960.", sep = "
 
 ```
 
+
+
 ```{r, echo = FALSE}
 meanLE2019 <- gapminder %>%
   filter(time == 2019) %>%
@@ -258,6 +319,8 @@ USrank2019 <- as.character(meanLE2019[meanLE2019$name == "United States of Ameri
 cat("The US was ranked ", USrank2019, "th for life expectancy in 2019.", sep = "")
 ```
 
+
+
 ```{r, echo = FALSE}
 num_countries1960 <- n_distinct(meanLE1960$name)
 meanLE1960$rank <- rank(desc(meanLE1960$mean))
@@ -266,6 +329,7 @@ relrank1960 <- USrank1960 / num_countries1960
 
 cat("The relative rank of the US divided by the number of countries that have LE data in 1960 is ", relrank1960, " for life expectancy in 1960.", sep = "")
 ```
+
 
 
 ```{r, echo = FALSE}
@@ -277,4 +341,6 @@ relrank2019 <- USrank2019 / num_countries2019
 cat("The relative rank of the US divided by the number of countries that have LE data in 2019 is ", relrank2019, " for life expectancy in 2019.", sep = "")
 ```
 
-This PS has taken me 9 hours.
+
+
+This PS has taken me 10 and a half hours.
