@@ -28,6 +28,270 @@ plot(pressure)
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
+```{r, echo = FALSE}
+## Loading the data:
+getwd()
+setwd("/Users/chloe/Desktop/INFO201/ps05-rmarkdown-plot")
+gapminder <- read_delim("gapminder.csv")
+##view(gapminder)
+head(gapminder, 3)
+columns <- ncol(gapminder)
+rows <- nrow(gapminder)
+cat("There are", columns, "columns and", rows, "rows.")
+
+iso_3 <- length(unique(gapminder$iso3))
+cat("There are", iso_3, "different iso3 codes.")
+
+iso_2 <- length(unique(gapminder$iso2))
+cat("There are", iso_2, "different iso2 codes.")
+
+names <- length(unique(gapminder$name))
+cat("There are", names, "different country names.")
+
+##grouped <- gapminder %>%
+ ## group_by(iso2)
+
+sorted <- arrange(gapminder, desc(iso2))
+
+name_iso2 <- paste(sorted$name, sorted$iso2, sep = " ")
+  
+unique(name_iso2)
+
+view(unique)
+
+gapminder %>%
+  filter(is.na(time) == FALSE) %>%
+  summarize(n = max(time)) %>%
+  pull(n)
+
+gapminder %>%
+  filter(is.na(time) == FALSE) %>%
+  summarize(n = min(time)) %>%
+  pull(n)
+
+co2_table <- gapminder %>%
+  filter(is.na(co2)) %>%
+  group_by(time) %>%
+  summarize(length(co2))
+##view(co2_table)
+
+```
+This table shows all of the CO2 emission data that is missing by year. 
+```{r, echo = FALSE}
+co2_table %>%
+  arrange(length(co2)) %>%
+  tail(3)
+```
+This table shows the three years with the most CO2 emission data missing.
 
 
+```{r, echo = FALSE}
+co2_PC_table <- gapminder %>%
+  filter(is.na(co2_PC)) %>%
+  group_by(time) %>%
+  summarize(length(co2_PC))
+ 
+```
+This table shows all of the CO2 PC emission data that is missing by year. 
 
+```{r, echo = FALSE}
+co2_PC_table %>%
+  arrange(`length(co2_PC)`) %>%
+  tail(3)
+```
+This table shows the three years with the most CO2 PC emission data missing.
+
+```{r, echo = FALSE}
+plotting <- gapminder %>%
+  filter(is.na(co2) == FALSE) %>%
+  filter(name == "United States of America" | name == "China" | name == "India" | name == "Canada" | name == "Aruba" | name == "Bahamas")
+  
+ggplot(plotting) +
+  geom_point(aes(x=time, y=co2, col=name))
+```
+This is a graph of the total CO2 emissions from the US, China, India, Canada, Aruba, and the Bahamas from 1960 to 2019. Each country seems to be regulating CO2 emissions in very different patterns. However, the general trend of CO2 emissions over the years is upward.  
+
+```{r, echo = FALSE}
+plotting_PC <- gapminder %>%
+  filter(is.na(co2_PC) == FALSE) %>%
+  filter(name == "United States of America" | name == "China" | name == "India" | name == "Canada" | name == "Aruba" | name == "Bahamas") 
+
+ggplot(plotting_PC) +
+    geom_point(aes(x=time, y=co2_PC, col=name))
+
+```
+This is a graph of the CO2 emissions per capita from the US, China, India, Canada, Aruba, and the Bahamas from 1960 to 2019. The trends for CO2 emissions per capita seem to be pretty steady for all of the countries expect for Aruba.  
+```{r, echo = FALSE}
+average_data <- gapminder %>% 
+  filter(is.na(co2_PC) == FALSE) %>%
+  filter(is.na(region) == FALSE) %>%
+  group_by(time, region) %>% 
+  summarise(average_value = mean(co2_PC))
+
+average_data
+```
+These are the average CO2 emissions per capita for each region every 
+year.
+
+```{r, echo = FALSE}
+filtered <- average_data %>%
+  filter(time == 1960 | time == 2016)
+
+ggplot(filtered, aes(region, average_value, fill = as.factor(time))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  labs(title = "Average CO2 Emissions for Different Continents in 1960 and 2016", x = "Continent", y = "CO2 Emission Per Capita", fill = "Year") +
+  theme_bw()
+```
+
+```{r, echo = FALSE}
+country2019 <- gapminder %>%
+  filter(is.na(co2_PC) == FALSE) %>%
+  filter(is.na(region) == FALSE) %>%
+  filter(is.na(name) == FALSE) %>%
+  filter(time == 2019) %>%
+  group_by(region, name) %>%
+  arrange(co2_PC) 
+  ##head(3, name)
+country2019
+```
+CO2 emission levels per capita for 2019 are not available. 
+
+```{r, echo = FALSE}
+GDPplot <- gapminder %>%
+  filter(is.na(GDP_PC) == FALSE) %>%
+  filter(is.na(lifeExpectancy) == FALSE) %>% 
+  filter(time == 1960) 
+  
+ggplot(GDPplot) +
+  geom_point(aes(x=lifeExpectancy, y=GDP_PC, group=name, size=totalPopulation, col=region))
+```
+This is a graph of GDP per capita versus life expectancy by country, using data from 1960. Overall, Europe and The Americas seem to have higher GDP per capita values than the other continents. Africa appears to have the lowest. 
+
+```{r, echo = FALSE}
+GDPplot <- gapminder %>%
+  filter(is.na(GDP_PC) == FALSE) %>%
+  filter(is.na(lifeExpectancy) == FALSE) %>% 
+  filter(time == 2019) 
+  
+ggplot(GDPplot) +
+  geom_point(aes(x=lifeExpectancy, y=GDP_PC, group=name, size=totalPopulation, col=region))
+```
+This is a graph of GDP per capita versus life expectancy by country, using data from 2019. The biggest noticeable change is the increase in life expectancy and GDP per capita values overall. Asia also increased in GDP per capita values relative to the other continents. 
+
+```{r, echo = FALSE}
+LE1960 <- gapminder %>%
+  filter(is.na(lifeExpectancy) == FALSE) %>%
+  filter(is.na(region) == FALSE) %>%
+  filter(time == 1960) %>%
+  group_by(region) %>%
+  summarise(LE = mean(lifeExpectancy)) %>%
+  pull(LE, region)
+
+LE1960
+```
+These are the average life expectancies based on continent in 1960.
+
+```{r, echo = FALSE}
+LE2019 <- gapminder %>%
+  filter(is.na(lifeExpectancy) == FALSE) %>%
+  filter(is.na(region) == FALSE) %>%
+  filter(time == 2019) %>%
+  group_by(region) %>%
+  summarise(LE = mean(lifeExpectancy)) %>%
+  pull(LE, region)
+
+LE2019
+```
+These are the average life expectancies based on continent in 2019.
+The relative trends of these life expectancies are reflective of what was shown in the graph.
+
+```{r, echo = FALSE}
+LE <- cbind(LE1960, LE2019)
+LE
+LE['LE Growth'] = LE['LE1960'] + LE['LE2019']
+print(LE)
+
+```
+
+```{r, echo = FALSE}
+GDP1960 <- gapminder %>%
+  filter(is.na(GDP_PC) == FALSE) %>%
+  filter(time == 1960)
+
+ggplot(GDP1960) +
+geom_histogram(aes(GDP_PC)) +
+  ggtitle("GDP Per Capita in 1960") +
+  xlab("GDP per Capita") +
+  ylab("Frequency")
+
+GDP2019 <- gapminder %>%
+  filter(is.na(GDP_PC) == FALSE) %>%
+  filter(time == 2019)
+
+ggplot(GDP2019) +
+geom_histogram(aes(GDP_PC)) +
+  ggtitle("GDP Per Capita in 2019") +
+  xlab("GDP per Capita") +
+  ylab("Frequency")
+
+GDP <- rbind(GDP1960, GDP2019)
+
+ggplot(GDP, aes(x = GDP_PC)) +
+  geom_histogram(binwidth = 0.5, color = "blue") +
+  ggtitle("GDP Per Capita in 2019 and 1960") +
+  xlab("GDP per Capita") +
+  ylab("Frequency")
+
+
+```
+
+
+```{r, echo = FALSE}
+meanLE1960 <- gapminder %>%
+  filter(time == 1960) %>%
+  filter(is.na(name) == FALSE) %>%
+  filter(is.na(lifeExpectancy) == FALSE) %>%
+  group_by(name) %>%
+  summarise(mean = mean(lifeExpectancy))
+
+meanLE1960$rank <- rank(desc(meanLE1960$mean))
+USrank1960 <- as.character(meanLE1960[meanLE1960$name == "United States of America", "rank"])
+
+cat("The US was ranked ", USrank1960, "th for life expectancy in 1960.", sep = "")
+
+```
+
+```{r, echo = FALSE}
+meanLE2019 <- gapminder %>%
+  filter(time == 2019) %>%
+  filter(is.na(name) == FALSE) %>%
+  filter(is.na(lifeExpectancy) == FALSE) %>%
+  group_by(name) %>%
+  summarise(mean = mean(lifeExpectancy))
+
+meanLE2019$rank <- rank(desc(meanLE2019$mean))
+USrank2019 <- as.character(meanLE2019[meanLE2019$name == "United States of America", "rank"])
+
+cat("The US was ranked ", USrank2019, "th for life expectancy in 2019.", sep = "")
+```
+
+```{r, echo = FALSE}
+num_countries1960 <- n_distinct(meanLE1960$name)
+meanLE1960$rank <- rank(desc(meanLE1960$mean))
+USrank1960 <- as.numeric(meanLE1960[meanLE1960$name == "United States of America", "rank"])
+relrank1960 <- USrank1960 / num_countries1960
+
+cat("The relative rank of the US divided by the number of countries that have LE data in 1960 is ", relrank1960, " for life expectancy in 1960.", sep = "")
+```
+
+
+```{r, echo = FALSE}
+num_countries2019 <- n_distinct(meanLE2019$name)
+meanLE2019$rank <- rank(desc(meanLE2019$mean))
+USrank2019 <- as.numeric(meanLE2019[meanLE2019$name == "United States of America", "rank"])
+relrank2019 <- USrank2019 / num_countries2019
+
+cat("The relative rank of the US divided by the number of countries that have LE data in 2019 is ", relrank2019, " for life expectancy in 2019.", sep = "")
+```
+
+This PS has taken me 9 hours.
